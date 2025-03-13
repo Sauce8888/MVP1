@@ -1,0 +1,39 @@
+Context
+I am building a company that creates simple, 1 page websites for Airbnb hosts. This means hosts can save on OTA fees. Our target market are Airbnb hosts who don�t have a website yet. We understand it�s hard for hosts to make a direct booking website themselves. It often looks quite bad and is ineffective. So our solution is hosts can come to our website, share their property details and they�ll get a website. To the customer, it�s super simple and they have to do very little and they�re given back a website that they can take bookings on. However, for our MVP we are going to cold call hosts, and once they agree to their site being built by us. We�ll just look at their listing data and create the sites. But for our MVP we�ll need to make a booking system. We are going to get 10 customers. The MVP will cater for single listing hosts.
+Core Features
+This is how I want it to work
+* We will host 10 customer sites on digital ocean, each host's website exists as a separate Next.js application in its own directory on the same server. Each site:
+Has its own .env.local file with API keys
+Runs on its own port
+Has its own domain/subdomain pointing to it
+* It will take payment through stripes API
+* It will show live availability e.g. the customer of the host will we see the availability of the property on the booking system
+* When booked it will sync with the hosts main calendar
+* We as a business have a dashboard to see all the hosts and their property
+* The host will have a dashboard where they can change the price of certain nights
+Reminders
+* We don�t have the Airbnb API and we won�t be getting it.
+* The supabase database has been set up, ask for details or clarification if needed
+* I�d like to host it on digitalocean
+* We want to test this locally first to test. So one template site working. So we'll make the template webiste working first and then set up the separate file system
+* Don't use 'mock data' make a fake website that we can just swap out the text and images but don't create fake data in a file and pull it to the website. 
+
+Clarifications:
+1. Calendar integration will be through a central google calendar that will connect with their airbnb calenda using iCal. 
+2. Authentication for hosts will be done by email and password, this has been made
+3. Build a modern and good looking host rental site template
+4. Booking information, first name, surname, email, phone number, number of guests, checkin checkout dates, special requests
+5. Hosts should be notified by email
+6. Calendar management, nothing other than price is needed for now
+7. For payment processing, the money the guest pays on the stripe API should go straight to the host
+8. Data migration, we will do it manually
+9. Commission structure isn�t important. The host will be paying us a yearly fee but we�ll manage that ourselves
+10. Cancellation Handling - Host-managed cancellations where hosts can mark bookings as cancelled in their dashboard, and they'll handle refunds manually through their Stripe account. System will update availability calendar automatically.
+11. Pricing structure - hosts can change the standard nightly rate, weekend pricing, any individual night, and seasonal, with an option for minimum stay requirements,
+12. Guest communication - will be done by email
+13. Bookings rules - no buffer needed
+14. For my admin panel we just need to see all the hosts that are with us and their site details
+15. Hosts will connect their stripe account by giving us their keys and we'll put them in the .env file
+16. We will manually link the google calendar
+
+
