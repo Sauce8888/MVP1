@@ -59,4 +59,67 @@ async function updateSchema() {
   }
 }
 
-updateSchema(); 
+// Add calendar_connections table
+const createCalendarConnectionsTable = async () => {
+  const { error } = await supabase.query(`
+    CREATE TABLE IF NOT EXISTS calendar_connections (
+      id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+      property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
+      source VARCHAR(50) NOT NULL,
+      ical_url TEXT NOT NULL,
+      last_synced TIMESTAMP,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  
+  if (error) {
+    console.error('Error creating calendar_connections table:', error);
+    return false;
+  }
+  
+  console.log('Calendar connections table created successfully');
+  return true;
+};
+
+// Add calendar_events table to store iCal events
+const createCalendarEventsTable = async () => {
+  const { error } = await supabase.query(`
+    CREATE TABLE IF NOT EXISTS calendar_events (
+      id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+      property_id UUID REFERENCES properties(id) ON DELETE CASCADE,
+      source VARCHAR(50) NOT NULL,
+      external_id TEXT,
+      summary TEXT,
+      start_date TIMESTAMP WITH TIME ZONE NOT NULL,
+      end_date TIMESTAMP WITH TIME ZONE NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE(property_id, source, external_id)
+    );
+  `);
+  
+  if (error) {
+    console.error('Error creating calendar_events table:', error);
+    return false;
+  }
+  
+  console.log('Calendar events table created successfully');
+  return true;
+};
+
+// Execute all migrations
+const runMigrations = async () => {
+  console.log('Starting database migrations...');
+  
+  // Call all your migration functions here
+  // ... existing migrations ...
+  
+  await createCalendarConnectionsTable();
+  await createCalendarEventsTable();
+  
+  console.log('All migrations completed');
+};
+
+updateSchema();
+runMigrations(); 

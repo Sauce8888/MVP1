@@ -47,4 +47,28 @@ export type UnavailableDate = {
   property_id: string;
   date: string;
   reason?: string;
+  booking_id?: string;
+  event_id?: string;
+};
+
+export type CalendarConnection = {
+  id: string;
+  property_id: string;
+  source: 'airbnb' | 'other';
+  ical_url: string;
+  last_synced: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CalendarEvent = {
+  id: string;
+  property_id: string;
+  source: 'airbnb' | 'other';
+  external_id: string | null;
+  summary: string | null;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
 }; 

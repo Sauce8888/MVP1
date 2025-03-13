@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import Stripe from 'stripe';
+import { sendBookingConfirmationToGuest, sendBookingNotificationToHost } from '@/lib/email-utils';
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
@@ -139,9 +140,9 @@ async function handleSuccessfulPayment(paymentIntent: Stripe.PaymentIntent) {
 
     // 3. Prepare to send confirmation emails
     const guestDetails = {
-      name: booking.guest_name,
-      email: booking.guest_email,
-      bookingId: booking.id,
+      id: booking.id,
+      guestName: booking.guest_name,
+      guestEmail: booking.guest_email,
       checkIn: new Date(booking.check_in).toLocaleDateString(),
       checkOut: new Date(booking.check_out).toLocaleDateString(),
       propertyName: booking.properties?.name || 'Property',
@@ -149,22 +150,57 @@ async function handleSuccessfulPayment(paymentIntent: Stripe.PaymentIntent) {
       currency: paymentIntent.currency.toUpperCase(),
     };
 
-    const hostDetails = {
-      email: booking.properties?.hosts?.email,
-      hostId: booking.properties?.hosts?.id,
-    };
+    const hostEmail = booking.properties?.hosts?.email;
+    const hostId = booking.properties?.hosts?.id;
 
-    // Log the details that would be sent in emails
-    console.log('Booking confirmed:', booking.id);
-    console.log('Guest details:', guestDetails);
-    console.log('Host details:', hostDetails);
-
-    // TODO: Send confirmation emails
-    // sendEmailToGuest(guestDetails);
-    // sendEmailToHost(hostDetails, guestDetails);
+    // 4. Check if the property has Airbnb calendar integration
+    const { data: calendarConnections } = await supabase
+      .from('calendar_connections')
+      .select('*')
+      .eq('property_id', booking.property_id)
+      .eq('source', 'airbnb');
     
-    // TODO: Update Google Calendar if connected
-    // updateGoogleCalendar(booking, booking.properties?.hosts?.id);
+    const hasAirbnbCalendar = !!(calendarConnections && calendarConnections.length > 0);
+
+    // 5. Send emails
+    if (guestDetails.guestEmail) {
+      try {
+        await sendBookingConfirmationToGuest({
+          id: booking.id,
+          propertyName: guestDetails.propertyName,
+          guestName: guestDetails.guestName,
+          guestEmail: guestDetails.guestEmail,
+          checkIn: guestDetails.checkIn,
+          checkOut: guestDetails.checkOut,
+          totalAmount: guestDetails.totalAmount,
+          currency: guestDetails.currency
+        });
+      } catch (emailError) {
+        console.error('Error sending guest email:', emailError);
+        // Don't throw, continue with host notification
+      }
+    }
+
+    if (hostEmail) {
+      try {
+        await sendBookingNotificationToHost(
+          hostEmail, 
+          {
+            id: booking.id,
+            propertyName: guestDetails.propertyName,
+            guestName: guestDetails.guestName,
+            guestEmail: guestDetails.guestEmail,
+            checkIn: guestDetails.checkIn,
+            checkOut: guestDetails.checkOut,
+            totalAmount: guestDetails.totalAmount,
+            currency: guestDetails.currency
+          },
+          hasAirbnbCalendar // Only include calendar reminder if Airbnb calendar is connected
+        );
+      } catch (emailError) {
+        console.error('Error sending host email:', emailError);
+      }
+    }
 
     return { success: true, bookingId: booking.id };
   } catch (error) {
